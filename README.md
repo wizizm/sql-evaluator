@@ -5,7 +5,7 @@
 ## 特性
 
 - 支持将SQL WHERE子句转换为Go逻辑
-- 支持xorm标签映射
+- 支持json标签映射
 - 支持常见的比较操作符（=, !=, >, <, >=, <=）
 - 支持AND和OR逻辑组合
 - 支持括号表达式
@@ -40,11 +40,11 @@ import (
 
 // User 示例用户模型（使用指针类型支持NULL值）
 type User struct {
-    ID       *int     `xorm:"id"`
-    Name     *string  `xorm:"name"`
-    Age      *int     `xorm:"age"`
-    Salary   *float64 `xorm:"salary"`
-    IsActive *bool    `xorm:"is_active"`
+    ID       *int     `json:"id"`
+    Name     *string  `json:"name"`
+    Age      *int     `json:"age"`
+    Salary   *float64 `json:"salary"`
+    IsActive *bool    `json:"is_active"`
 }
 
 // 辅助函数：创建指针类型
@@ -127,11 +127,11 @@ fmt.Printf("name IS NULL OR name = '': %v\n", isNullEmpty) // 输出: true
 ```go
 // UserWithNonPtr 示例用户模型（使用非指针类型）
 type UserWithNonPtr struct {
-    ID       int     `xorm:"id"`
-    Name     string  `xorm:"name"`
-    Age      int     `xorm:"age"`
-    Salary   float64 `xorm:"salary"`
-    IsActive bool    `xorm:"is_active"`
+    ID       int     `json:"id"`
+    Name     string  `json:"name"`
+    Age      int     `json:"age"`
+    Salary   float64 `json:"salary"`
+    IsActive bool    `json:"is_active"`
 }
 
 // 使用非指针类型model

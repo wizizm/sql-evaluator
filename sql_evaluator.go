@@ -296,6 +296,26 @@ func (e *SQLEvaluator) evaluateInExpr(expr *sqlparser.ComparisonExpr) (bool, err
 			continue
 		}
 
+		// 处理一元表达式（负数）
+		if unaryVal, ok := val.(*sqlparser.UnaryExpr); ok {
+			if unaryVal.Operator == sqlparser.MinusStr {
+				// 获取一元表达式的值
+				actualVal, err := e.getValue(unaryVal.Expr)
+				if err != nil {
+					return false, err
+				}
+				// 根据类型处理负数
+				switch v := actualVal.(type) {
+				case int:
+					val = -v
+				case float64:
+					val = -v
+				default:
+					return false, fmt.Errorf("不支持的一元表达式类型: %T", actualVal)
+				}
+			}
+		}
+
 		// 尝试类型转换
 		leftConverted, rightConverted, err := convertTypes(leftVal, val)
 		if err == nil && reflect.DeepEqual(leftConverted, rightConverted) {
@@ -475,6 +495,28 @@ func (e *SQLEvaluator) getValue(expr sqlparser.Expr) (interface{}, error) {
 		return bool(node), nil
 	case *sqlparser.NullVal:
 		return nil, nil
+	case *sqlparser.UnaryExpr:
+		// 处理一元表达式，如 -1.5
+		value, err := e.getValue(node.Expr)
+		if err != nil {
+			return nil, err
+		}
+
+		// 根据操作符处理值
+		switch node.Operator {
+		case sqlparser.MinusStr:
+			// 处理负数
+			switch v := value.(type) {
+			case int:
+				return -v, nil
+			case float64:
+				return -v, nil
+			default:
+				return nil, fmt.Errorf("不支持的操作符 %s 应用于类型 %T", node.Operator, value)
+			}
+		default:
+			return nil, fmt.Errorf("不支持的一元操作符: %s", node.Operator)
+		}
 	default:
 		return nil, fmt.Errorf("不支持的表达式类型: %T", expr)
 	}
@@ -696,6 +738,31 @@ func (e *SQLEvaluator) getSQLValues(expr sqlparser.Expr) ([]interface{}, error) 
 			values[i] = value
 		}
 		return values, nil
+	case *sqlparser.UnaryExpr:
+		// 处理一元表达式，如 -1.5
+		value, err := e.getValue(node.Expr)
+		if err != nil {
+			return nil, err
+		}
+
+		// 根据操作符处理值
+		switch node.Operator {
+		case sqlparser.MinusStr:
+			// 处理负数
+			switch v := value.(type) {
+			case int:
+				return []interface{}{-v}, nil
+			case float64:
+				return []interface{}{-v}, nil
+			default:
+				return nil, fmt.Errorf("不支持的操作符 %s 应用于类型 %T", node.Operator, value)
+			}
+		default:
+			return nil, fmt.Errorf("不支持的一元操作符: %s", node.Operator)
+		}
+	case *sqlparser.ParenExpr:
+		// 处理括号表达式，如 (-1.5, -2.5)
+		return e.getSQLValues(node.Expr)
 	default:
 		return nil, fmt.Errorf("不支持的表达式类型: %T", expr)
 	}

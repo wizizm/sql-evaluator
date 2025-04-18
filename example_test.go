@@ -877,3 +877,293 @@ func TestSQLEvaluatorNonPtr(t *testing.T) {
 		})
 	}
 }
+
+// TestSQLEvaluatorNegativeValues 测试负数值的处理
+func TestSQLEvaluatorNegativeValues(t *testing.T) {
+	tests := []struct {
+		name        string
+		model       interface{}
+		whereClause string
+		want        bool
+		wantErr     bool
+	}{
+		{
+			name: "负整数比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(-25),
+				Salary:   float64Ptr(5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "age < 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负浮点数比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(25),
+				Salary:   float64Ptr(-5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "salary < 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负整数范围比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(-25),
+				Salary:   float64Ptr(5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "age BETWEEN -30 AND -20",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负浮点数范围比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(25),
+				Salary:   float64Ptr(-5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "salary BETWEEN -6000 AND -4000",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负整数列表比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(-25),
+				Salary:   float64Ptr(5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "age IN (-30, -25, -20)",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负浮点数列表比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(25),
+				Salary:   float64Ptr(-5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "salary IN (-6000, -5000.50, -4000)",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负整数与正数比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(-25),
+				Salary:   float64Ptr(5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "age < 0 AND salary > 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负浮点数与正数比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(25),
+				Salary:   float64Ptr(-5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "age > 0 AND salary < 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负整数与零比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(-25),
+				Salary:   float64Ptr(5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "age < 0 AND salary > 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负浮点数与零比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(25),
+				Salary:   float64Ptr(-5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "salary < 0 AND age > 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负整数与NULL比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     strPtr("张三"),
+				Age:      intPtr(-25),
+				Salary:   nil,
+				IsActive: boolPtr(true),
+			},
+			whereClause: "age < 0 AND salary IS NULL",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "负浮点数与NULL比较",
+			model: &User{
+				ID:       intPtr(1),
+				Name:     nil,
+				Age:      intPtr(25),
+				Salary:   float64Ptr(-5000.50),
+				IsActive: boolPtr(true),
+			},
+			whereClause: "salary < 0 AND name IS NULL",
+			want:        true,
+			wantErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			evaluator := NewSQLEvaluator(tt.model)
+			got, err := evaluator.EvaluateWhere(tt.whereClause)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EvaluateWhere() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("EvaluateWhere() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestSQLEvaluatorNonPtrNegativeValues 测试非指针类型字段的负数值处理
+func TestSQLEvaluatorNonPtrNegativeValues(t *testing.T) {
+	tests := []struct {
+		name        string
+		model       interface{}
+		whereClause string
+		want        bool
+		wantErr     bool
+	}{
+		{
+			name: "非指针负整数比较",
+			model: &UserWithNonPtr{
+				ID:       1,
+				Name:     "张三",
+				Age:      -25,
+				Salary:   5000.50,
+				IsActive: true,
+			},
+			whereClause: "age < 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "非指针负浮点数比较",
+			model: &UserWithNonPtr{
+				ID:       1,
+				Name:     "张三",
+				Age:      25,
+				Salary:   -5000.50,
+				IsActive: true,
+			},
+			whereClause: "salary < 0",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "非指针负整数范围比较",
+			model: &UserWithNonPtr{
+				ID:       1,
+				Name:     "张三",
+				Age:      -25,
+				Salary:   5000.50,
+				IsActive: true,
+			},
+			whereClause: "age BETWEEN -30 AND -20",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "非指针负浮点数范围比较",
+			model: &UserWithNonPtr{
+				ID:       1,
+				Name:     "张三",
+				Age:      25,
+				Salary:   -5000.50,
+				IsActive: true,
+			},
+			whereClause: "salary BETWEEN -6000 AND -4000",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "非指针负整数列表比较",
+			model: &UserWithNonPtr{
+				ID:       1,
+				Name:     "张三",
+				Age:      -25,
+				Salary:   5000.50,
+				IsActive: true,
+			},
+			whereClause: "age IN (-30, -25, -20)",
+			want:        true,
+			wantErr:     false,
+		},
+		{
+			name: "非指针负浮点数列表比较",
+			model: &UserWithNonPtr{
+				ID:       1,
+				Name:     "张三",
+				Age:      25,
+				Salary:   -5000.50,
+				IsActive: true,
+			},
+			whereClause: "salary IN (-6000, -5000.50, -4000)",
+			want:        true,
+			wantErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			evaluator := NewSQLEvaluator(tt.model)
+			got, err := evaluator.EvaluateWhere(tt.whereClause)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EvaluateWhere() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("EvaluateWhere() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
