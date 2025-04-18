@@ -1,9 +1,7 @@
-package sqlevaluator_test
+package main
 
 import (
 	"testing"
-
-	sqlevaluator "github.com/wizizm/sql-evaluator"
 )
 
 // User 示例用户模型
@@ -394,14 +392,14 @@ func TestSQLEvaluator(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			evaluator := sqlevaluator.NewSQLEvaluator(tt.model)
+			evaluator := NewSQLEvaluator(tt.model)
 			got, err := evaluator.EvaluateWhere(tt.whereClause)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("SQLEvaluator.EvaluateWhere() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("EvaluateWhere() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("SQLEvaluator.EvaluateWhere() = %v, want %v", got, tt.want)
+				t.Errorf("EvaluateWhere() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -419,7 +417,7 @@ func TestSQLEvaluatorNullValues(t *testing.T) {
 	}
 
 	// 创建评估器
-	evaluator := sqlevaluator.NewSQLEvaluator(userWithNulls)
+	evaluator := NewSQLEvaluator(userWithNulls)
 
 	// NULL值测试用例
 	nullTestCases := []struct {
@@ -527,7 +525,7 @@ func TestSQLEvaluatorEmptyValues(t *testing.T) {
 	}
 
 	// 创建评估器
-	evaluator := sqlevaluator.NewSQLEvaluator(userWithEmptyValues)
+	evaluator := NewSQLEvaluator(userWithEmptyValues)
 
 	// 空值测试用例
 	emptyTestCases := []struct {
@@ -620,7 +618,7 @@ func TestSQLEvaluatorMixedValues(t *testing.T) {
 	}
 
 	// 创建评估器
-	evaluator := sqlevaluator.NewSQLEvaluator(userWithMixedValues)
+	evaluator := NewSQLEvaluator(userWithMixedValues)
 
 	// 混合值测试用例
 	mixedTestCases := []struct {
@@ -865,7 +863,7 @@ func TestSQLEvaluatorNonPtr(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			evaluator := sqlevaluator.NewSQLEvaluator(tt.model)
+			evaluator := NewSQLEvaluator(tt.model)
 			got, err := evaluator.EvaluateWhere(tt.whereClause)
 
 			if (err != nil) != tt.wantErr {
