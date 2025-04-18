@@ -1,4 +1,4 @@
-package main
+package sqlevaluator
 
 import (
 	"fmt"
