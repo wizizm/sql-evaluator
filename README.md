@@ -28,12 +28,14 @@ go get github.com/wizizm/sql-evaluator
 
 ## 使用示例
 
+### 基本用法
+
 ```go
 package main
 
 import (
     "fmt"
-    "github.com/wizizm/sql-evaluator"
+    sqlevaluator "github.com/wizizm/sql-evaluator"
 )
 
 // User 示例用户模型（使用指针类型支持NULL值）
@@ -43,15 +45,6 @@ type User struct {
     Age      *int     `xorm:"age"`
     Salary   *float64 `xorm:"salary"`
     IsActive *bool    `xorm:"is_active"`
-}
-
-// UserWithNonPtr 示例用户模型（使用非指针类型）
-type UserWithNonPtr struct {
-    ID       int     `xorm:"id"`
-    Name     string  `xorm:"name"`
-    Age      int     `xorm:"age"`
-    Salary   float64 `xorm:"salary"`
-    IsActive bool    `xorm:"is_active"`
 }
 
 // 辅助函数：创建指针类型
@@ -72,7 +65,7 @@ func boolPtr(b bool) *bool {
 }
 
 func main() {
-    // 创建指针类型model实例
+    // 创建model实例
     user := &User{
         ID:       intPtr(1),
         Name:     strPtr("张三"),
@@ -82,7 +75,7 @@ func main() {
     }
 
     // 创建评估器
-    evaluator := sql_evaluator.NewSQLEvaluator(user)
+    evaluator := sqlevaluator.NewSQLEvaluator(user)
 
     // 评估WHERE子句
     result, err := evaluator.EvaluateWhere("name = '张三' AND age > 20")
@@ -92,58 +85,75 @@ func main() {
     }
 
     fmt.Printf("评估结果: %v\n", result)
-    
-    // NULL值处理示例
-    userWithNull := &User{
-        ID:       intPtr(1),
-        Name:     nil, // NULL值
-        Age:      intPtr(30),
-        Salary:   nil, // NULL值
-        IsActive: boolPtr(true),
-    }
-    
-    // 检查字段是否为NULL
-    isNull, _ := evaluator.EvaluateWhere("name IS NULL")
-    fmt.Printf("name IS NULL: %v\n", isNull) // 输出: true
-    
-    // 空字符串示例
-    userWithEmpty := &User{
-        ID:       intPtr(1),
-        Name:     strPtr(""), // 空字符串
-        Age:      intPtr(25),
-        Salary:   float64Ptr(0.0), // 零值
-        IsActive: boolPtr(false), // false值
-    }
-    
-    // 检查字段是否为空字符串
-    isEmpty, _ := evaluator.EvaluateWhere("name = ''")
-    fmt.Printf("name = '': %v\n", isEmpty) // 输出: true
-    
-    // 区分NULL和空字符串
-    isNullEmpty, _ := evaluator.EvaluateWhere("name IS NULL OR name = ''")
-    fmt.Printf("name IS NULL OR name = '': %v\n", isNullEmpty) // 输出: true
-
-    // 使用非指针类型model
-    userNonPtr := &UserWithNonPtr{
-        ID:       1,
-        Name:     "张三",
-        Age:      25,
-        Salary:   5000.50,
-        IsActive: true,
-    }
-
-    // 创建非指针类型评估器
-    evaluatorNonPtr := sql_evaluator.NewSQLEvaluator(userNonPtr)
-
-    // 评估非指针类型WHERE子句
-    resultNonPtr, err := evaluatorNonPtr.EvaluateWhere("name = '张三' AND age > 20")
-    if err != nil {
-        fmt.Printf("评估失败: %v\n", err)
-        return
-    }
-
-    fmt.Printf("非指针类型评估结果: %v\n", resultNonPtr)
 }
+```
+
+### NULL值处理
+
+```go
+
+// NULL值处理示例
+userWithNull := &User{
+    ID:       intPtr(1),
+    Name:     nil, // NULL值
+    Age:      intPtr(30),
+    Salary:   nil, // NULL值
+    IsActive: boolPtr(true),
+}
+evaluator := sqlevaluator.NewSQLEvaluator(userWithNull)
+// 检查字段是否为NULL
+isNull, _ := evaluator.EvaluateWhere("name IS NULL")
+fmt.Printf("name IS NULL: %v\n", isNull) // 输出: true
+
+// 空字符串示例
+userWithEmpty := &User{
+    ID:       intPtr(1),
+    Name:     strPtr(""), // 空字符串
+    Age:      intPtr(25),
+    Salary:   float64Ptr(0.0), // 零值
+    IsActive: boolPtr(false), // false值
+}
+evaluator := sqlevaluator.NewSQLEvaluator(userWithEmpty)
+// 检查字段是否为空字符串
+isEmpty, _ := evaluator.EvaluateWhere("name = ''")
+fmt.Printf("name = '': %v\n", isEmpty) // 输出: true
+// 区分NULL和空字符串
+isNullEmpty, _ := evaluator.EvaluateWhere("name IS NULL OR name = ''")
+fmt.Printf("name IS NULL OR name = '': %v\n", isNullEmpty) // 输出: true
+```
+
+### 非指针类型字段
+
+```go
+// UserWithNonPtr 示例用户模型（使用非指针类型）
+type UserWithNonPtr struct {
+    ID       int     `xorm:"id"`
+    Name     string  `xorm:"name"`
+    Age      int     `xorm:"age"`
+    Salary   float64 `xorm:"salary"`
+    IsActive bool    `xorm:"is_active"`
+}
+
+// 使用非指针类型model
+userNonPtr := &UserWithNonPtr{
+    ID:       1,
+    Name:     "张三",
+    Age:      25,
+    Salary:   5000.50,
+    IsActive: true,
+}
+
+// 创建非指针类型评估器
+evaluatorNonPtr := sqlevaluator.NewSQLEvaluator(userNonPtr)
+
+// 评估非指针类型WHERE子句
+resultNonPtr, err := evaluatorNonPtr.EvaluateWhere("name = '张三' AND age > 20")
+if err != nil {
+    fmt.Printf("评估失败: %v\n", err)
+    return
+}
+
+fmt.Printf("非指针类型评估结果: %v\n", resultNonPtr)
 ```
 
 ## 支持的SQL操作
