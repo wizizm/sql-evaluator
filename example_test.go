@@ -1,4 +1,4 @@
-package interceptor
+package main
 
 import (
 	"testing"
