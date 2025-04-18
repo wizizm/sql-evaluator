@@ -6,20 +6,20 @@ import (
 
 // User 示例用户模型
 type User struct {
-	ID       *int     `xorm:"id"`
-	Name     *string  `xorm:"name"`
-	Age      *int     `xorm:"age"`
-	Salary   *float64 `xorm:"salary"`
-	IsActive *bool    `xorm:"is_active"`
+	ID       *int     `json:"id"`
+	Name     *string  `json:"name"`
+	Age      *int     `json:"age"`
+	Salary   *float64 `json:"salary"`
+	IsActive *bool    `json:"is_active"`
 }
 
 // UserWithNonPtr 示例用户模型（非指针字段）
 type UserWithNonPtr struct {
-	ID       int     `xorm:"id"`
-	Name     string  `xorm:"name"`
-	Age      int     `xorm:"age"`
-	Salary   float64 `xorm:"salary"`
-	IsActive bool    `xorm:"is_active"`
+	ID       int     `json:"id"`
+	Name     string  `json:"name"`
+	Age      int     `json:"age"`
+	Salary   float64 `json:"salary"`
+	IsActive bool    `json:"is_active"`
 }
 
 // strPtr 返回字符串的指针

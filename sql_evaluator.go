@@ -668,11 +668,11 @@ func (e *SQLEvaluator) getFieldName(expr sqlparser.Expr) (string, error) {
 			return fieldName, nil
 		}
 
-		// 如果找不到，尝试使用xorm标签
+		// 如果找不到，尝试使用json标签
 		modelType := modelValue.Type()
 		for i := 0; i < modelType.NumField(); i++ {
 			field := modelType.Field(i)
-			if tag := field.Tag.Get("xorm"); tag == sqlName {
+			if tag := field.Tag.Get("json"); tag == sqlName {
 				return field.Name, nil
 			}
 		}
