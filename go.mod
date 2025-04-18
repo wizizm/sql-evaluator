@@ -1,4 +1,4 @@
-module sql-evaluator
+module github.com/wizizm/sql-evaluator
 
 go 1.21
 
