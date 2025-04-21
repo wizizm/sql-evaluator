@@ -690,38 +690,49 @@ func convertTypes(a, b interface{}) (interface{}, interface{}, error) {
 func (e *SQLEvaluator) getFieldName(expr sqlparser.Expr) (string, error) {
 	switch v := expr.(type) {
 	case *sqlparser.ColName:
-		// 将SQL字段名转换为Go结构体字段名
 		sqlName := v.Name.String()
-		parts := strings.Split(sqlName, "_")
-		for i := range parts {
-			parts[i] = strings.Title(parts[i])
-		}
-		fieldName := strings.Join(parts, "")
 
-		// 检查字段是否存在
+		// 检查结构体
 		modelValue := reflect.ValueOf(e.model)
 		if modelValue.Kind() == reflect.Ptr {
 			modelValue = modelValue.Elem()
 		}
+		modelType := modelValue.Type()
 
-		// 首先尝试直接使用转换后的字段名
+		// 1. 尝试匹配 json 标签
+		for i := 0; i < modelType.NumField(); i++ {
+			field := modelType.Field(i)
+			tag := field.Tag.Get("json")
+			// 处理带选项的标签，如 `json:"name,omitempty"`
+			tagParts := strings.Split(tag, ",")
+			if len(tagParts) > 0 && tagParts[0] == sqlName {
+				return field.Name, nil
+			}
+		}
+
+		// 2. 首先尝试直接匹配字段名（不区分大小写）
+		for i := 0; i < modelType.NumField(); i++ {
+			field := modelType.Field(i)
+			if strings.EqualFold(field.Name, sqlName) {
+				return field.Name, nil
+			}
+		}
+
+		// 3. 尝试将下划线命名转换为驼峰命名
+		parts := strings.Split(sqlName, "_")
+		for i := range parts {
+			parts[i] = strings.Title(strings.ToLower(parts[i]))
+		}
+		fieldName := strings.Join(parts, "")
+
 		field := modelValue.FieldByName(fieldName)
 		if field.IsValid() {
 			return fieldName, nil
 		}
 
-		// 如果找不到，尝试使用json标签
-		modelType := modelValue.Type()
-		for i := 0; i < modelType.NumField(); i++ {
-			field := modelType.Field(i)
-			if tag := field.Tag.Get("json"); tag == sqlName {
-				return field.Name, nil
-			}
-		}
-
-		return "", fmt.Errorf("field %s not found", sqlName)
+		return "", fmt.Errorf("字段未找到: %s", sqlName)
 	default:
-		return "", fmt.Errorf("unsupported expression type for field name: %T", expr)
+		return "", fmt.Errorf("不支持的表达式类型: %T", expr)
 	}
 }
 

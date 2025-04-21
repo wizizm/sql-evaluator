@@ -1,7 +1,9 @@
 package sqlevaluator
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 )
 
 // User 示例用户模型
@@ -1165,5 +1167,124 @@ func TestSQLEvaluatorNonPtrNegativeValues(t *testing.T) {
 				t.Errorf("EvaluateWhere() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// randomString 生成指定长度的随机字符串
+func randomString(length int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+// randomUser 生成随机用户数据
+func randomUser() *User {
+	// 随机决定是否使用指针
+	usePtr := rand.Float32() < 0.5
+
+	var id *int
+	var name *string
+	var age *int
+	var salary *float64
+	var isActive *bool
+
+	if usePtr {
+		idVal := rand.Intn(1000)
+		id = &idVal
+		nameVal := randomString(10)
+		name = &nameVal
+		ageVal := rand.Intn(100)
+		age = &ageVal
+		salaryVal := rand.Float64() * 10000
+		salary = &salaryVal
+		isActiveVal := rand.Float32() < 0.5
+		isActive = &isActiveVal
+	} else {
+		idVal := rand.Intn(1000)
+		id = &idVal
+		nameVal := randomString(10)
+		name = &nameVal
+		ageVal := rand.Intn(100)
+		age = &ageVal
+		salaryVal := rand.Float64() * 10000
+		salary = &salaryVal
+		isActiveVal := rand.Float32() < 0.5
+		isActive = &isActiveVal
+	}
+
+	return &User{
+		ID:       id,
+		Name:     name,
+		Age:      age,
+		Salary:   salary,
+		IsActive: isActive,
+	}
+}
+
+// BenchmarkSQLEvaluator 性能测试
+func BenchmarkSQLEvaluator(b *testing.B) {
+	// 初始化随机数生成器
+	rand.Seed(time.Now().UnixNano())
+
+	// 预定义一些常用的SQL查询条件
+	queries := []string{
+		"name LIKE 'a%'",
+		"age > 50",
+		"salary BETWEEN 1000 AND 5000",
+		"is_active = true",
+		"id IN (1, 2, 3, 4, 5)",
+		"name IS NOT NULL AND age > 30",
+		"(age > 25 AND salary > 5000) OR (name LIKE 'b%' AND is_active = true)",
+	}
+
+	// 运行基准测试
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// 生成随机用户数据
+		user := randomUser()
+		evaluator := NewSQLEvaluator(user)
+
+		// 随机选择一个查询条件
+		query := queries[rand.Intn(len(queries))]
+
+		// 执行查询
+		_, err := evaluator.EvaluateWhere(query)
+		if err != nil {
+			b.Fatalf("查询执行失败: %v", err)
+		}
+	}
+}
+
+// BenchmarkSQLEvaluatorComplex 复杂条件性能测试
+func BenchmarkSQLEvaluatorComplex(b *testing.B) {
+	// 初始化随机数生成器
+	rand.Seed(time.Now().UnixNano())
+
+	// 预定义一些复杂的SQL查询条件
+	complexQueries := []string{
+		"(age > 30 AND salary > 5000) OR (name LIKE 'a%' AND is_active = true) AND id > 100",
+		"(name IS NOT NULL AND age BETWEEN 20 AND 50) OR (salary > 8000 AND is_active = true) AND id IN (1, 2, 3, 4, 5)",
+		"(age > 25 AND salary BETWEEN 3000 AND 7000) AND (name LIKE 'b%' OR is_active = true) AND id > 50",
+		"(salary > 6000 AND is_active = true) OR (age > 35 AND name LIKE 'c%') AND id BETWEEN 1 AND 100",
+	}
+
+	// 运行基准测试
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// 生成随机用户数据
+		user := randomUser()
+		evaluator := NewSQLEvaluator(user)
+
+		// 随机选择一个复杂查询条件
+		query := complexQueries[rand.Intn(len(complexQueries))]
+
+		// 执行查询
+		_, err := evaluator.EvaluateWhere(query)
+		if err != nil {
+			b.Fatalf("复杂查询执行失败: %v", err)
+		}
 	}
 }
